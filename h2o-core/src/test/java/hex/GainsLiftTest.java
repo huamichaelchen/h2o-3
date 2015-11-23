@@ -2,7 +2,6 @@ package hex;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import water.TestUtil;
 import water.fvec.Vec;
@@ -12,6 +11,28 @@ import java.util.Random;
 
 public class GainsLiftTest extends TestUtil {
   @BeforeClass public static void stall() { stall_till_cloudsize(1); }
+
+  @Test public void constant() {
+    int len = 100000;
+    double[] p = new double[len];
+    long[] a = new long[len];
+    Random rng = new Random(0xDECAF);
+    for (int i=0; i<len; ++i) {
+      a[i] = rng.nextDouble() > 0.8 ? 1 : 0;
+      p[i] = 0.343424;
+    }
+    Vec actual = Vec.makeVec(a, new String[]{"N","Y"}, Vec.newKey());
+    Vec predict = Vec.makeVec(p, Vec.newKey());
+
+    GainsLift gl = new GainsLift(predict, actual);
+    gl._groups = 10;
+    gl.exec();
+    Log.info(gl);
+    Assert.assertTrue(gl.response_rates[0] == gl.avg_response_rate);
+
+    actual.remove();
+    predict.remove();
+  }
 
   @Test public void good() {
     int len = 100000;
@@ -86,7 +107,7 @@ public class GainsLiftTest extends TestUtil {
     predict.remove();
   }
 
-  @Ignore @Test public void tiesNApreds() {
+  @Test public void tiesNApreds() {
     int len = 100000;
     double[] p = new double[len];
     long[] a = new long[len];
@@ -110,7 +131,7 @@ public class GainsLiftTest extends TestUtil {
     predict.remove();
   }
 
-  @Ignore @Test public void tiesNAlabels() {
+  @Test public void tiesNAlabels() {
     int len = 100000;
     double[] p = new double[len];
     double[] a = new double[len];
@@ -119,6 +140,31 @@ public class GainsLiftTest extends TestUtil {
       a[i] = rng.nextDouble() > 0.8 ? 1 : 0;
       p[i] = rng.nextDouble() > 0.5 ? 0.7 : 0.4;
       if (rng.nextDouble() > 0.85) a[i] = Double.NaN;
+    }
+    Vec actual = Vec.makeVec(a, new String[]{"N","Y"}, Vec.newKey());
+    Vec predict = Vec.makeVec(p, Vec.newKey());
+
+    GainsLift gl = new GainsLift(predict, actual);
+    gl._groups = 10;
+    gl.exec();
+    Log.info(gl);
+    for (int i=0;i<gl.response_rates.length;++i)
+      Assert.assertTrue(gl.response_rates[i] > 0.19 && gl.response_rates[i] < 0.21);
+
+    actual.remove();
+    predict.remove();
+  }
+
+  @Test public void tiesNAlabels_preds() {
+    int len = 100000;
+    double[] p = new double[len];
+    double[] a = new double[len];
+    Random rng = new Random(0xDECAF);
+    for (int i=0; i<len; ++i) {
+      a[i] = rng.nextDouble() > 0.8 ? 1 : 0;
+      p[i] = rng.nextDouble() > 0.5 ? 0.7 : 0.4;
+      if (rng.nextDouble() > 0.85) a[i] = Double.NaN;
+      if (rng.nextDouble() > 0.85) p[i] = Double.NaN;
     }
     Vec actual = Vec.makeVec(a, new String[]{"N","Y"}, Vec.newKey());
     Vec predict = Vec.makeVec(p, Vec.newKey());
