@@ -1273,7 +1273,7 @@ public class Frame extends Lockable<Frame> {
     Vec v2 = f.anyVec();
     if(v1.length() != v2.length())
       throw new IllegalArgumentException("Can not make vectors of different length compatible!");
-    if (v2 == null || v1.checkCompatible(v2))
+    if (v2 == null || Vec.VectorGroup.sameGroup(v1,v2))
       return f;
     // Ok, here make some new Vecs with compatible layout
     Key k = Key.make();
@@ -1291,17 +1291,6 @@ public class Frame extends Lockable<Frame> {
     // Assert row numbering sanity.
     assert row <= lastRowOfCurrentChunk;
     return row >= lastRowOfCurrentChunk;
-  }
-
-  /**
-   * Flush a chunk if it's not homed here.
-   * Do this to avoid filling up memory when streaming a large dataset.
-   */
-  private void hintFlushRemoteChunk(Vec v, int cidx) {
-    Key k = v.chunkKey(cidx);
-    if( ! k.home() ) {
-      H2O.raw_remove(k);
-    }
   }
 
   /** Convert this Frame to a CSV (in an {@link InputStream}), that optionally
@@ -1383,7 +1372,9 @@ public class Frame extends Lockable<Frame> {
       // Flush non-empty remote chunk if we're done with it.
       if (isLastRowOfCurrentNonEmptyChunk(_curChkIdx, _row)) {
         for (Vec v : vecs()) {
-          hintFlushRemoteChunk(v, _curChkIdx);
+          Key k = v.chunkKey(_curChkIdx);
+          if( !k.home() )
+            H2O.raw_remove(k);
         }
       }
 
