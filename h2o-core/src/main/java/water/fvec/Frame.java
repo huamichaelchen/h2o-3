@@ -675,7 +675,7 @@ public class Frame extends Lockable<Frame> {
     nv = ((new Frame(rv)).makeCompatible(new Frame(nv))).anyVec();
     DKV.put(nv);
     assert DKV.get(nv._key)!=null; // Already in DKV
-    assert rv.group().equals(nv.group());
+    assert rv.checkCompatible(nv);
     _vecs[col] = nv;
     _keys[col] = nv._key;
     return rv;
